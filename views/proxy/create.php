@@ -16,5 +16,5 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= $this->render('_form', [
         'model' => $model,
     ]) ?>
-
+    <div class="cept-test-block">the proxy create page is work</div>
 </div>

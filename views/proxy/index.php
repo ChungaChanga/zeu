@@ -70,5 +70,5 @@ $this->params['breadcrumbs'][] = $this->title;
         ],
     ]); ?>
     <?php Pjax::end(); ?>
-
+    <div class="cept-test-block">the proxy index page is work</div>
 </div>

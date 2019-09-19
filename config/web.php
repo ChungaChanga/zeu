@@ -5,6 +5,7 @@ $db = require __DIR__ . '/db.php';
 
 $config = [
     'id' => 'basic',
+    'name' => 'Zeustrak test',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
     'aliases' => [
@@ -14,7 +15,7 @@ $config = [
     'components' => [
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
-            'cookieValidationKey' => 'NiMx6L27_yiQOcLUBhkI5r109i5NgfII',
+            'cookieValidationKey' => 'yE54xVbb8yCpE6Hr0F-BbfhdTR92Rzj9',
         ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
@@ -43,6 +44,10 @@ $config = [
             ],
         ],
         'db' => $db,
+        'authManager' => [
+            'class' => 'app\common\MyDbManager',
+            'cache' => 'cache'//mb true?
+        ],
         /*
         'urlManager' => [
             'enablePrettyUrl' => true,
@@ -51,6 +56,11 @@ $config = [
             ],
         ],
         */
+    ],
+    'modules' => [
+        'gridview' =>  [
+            'class' => '\kartik\grid\Module'
+        ]
     ],
     'params' => $params,
 ];
@@ -61,14 +71,14 @@ if (YII_ENV_DEV) {
     $config['modules']['debug'] = [
         'class' => 'yii\debug\Module',
         // uncomment the following to add your IP if you are not connecting from localhost.
-        //'allowedIPs' => ['127.0.0.1', '::1'],
+        'allowedIPs' => ['*'],
     ];
 
     $config['bootstrap'][] = 'gii';
     $config['modules']['gii'] = [
         'class' => 'yii\gii\Module',
         // uncomment the following to add your IP if you are not connecting from localhost.
-        //'allowedIPs' => ['127.0.0.1', '::1'],
+        'allowedIPs' => ['*'],
     ];
 }
 

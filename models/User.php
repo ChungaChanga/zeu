@@ -1,74 +1,66 @@
 <?php
 
+
 namespace app\models;
 
-class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
+use Yii;
+use yii\db\ActiveRecord;
+use yii\log\Logger;
+use yii\web\IdentityInterface;
+
+class User extends ActiveRecord implements IdentityInterface
 {
-    public $id;
-    public $username;
-    public $password;
-    public $authKey;
-    public $accessToken;
+    /**
+     * @return string
+     */
+    public static function tableName()
+    {
+        return 'user';
+    }
 
-    private static $users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'admin',
-            'password' => 'admin',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'demo',
-            'password' => 'demo',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-    ];
-
+    public function rules()
+    {
+        return [
+            [['name'], 'string'],
+            [['email'], 'email'],
+            [['password', 'rolesNames'], 'safe'],
+        ];
+    }
 
     /**
-     * {@inheritdoc}
+     * @param bool $insert
+     * @return bool
+     * @throws \yii\base\Exception
+     */
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            if ($this->isNewRecord) {
+                $this->auth_key = \Yii::$app->security->generateRandomString();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public static function findIdentityByAccessToken($token, $type = null)
+    {
+    }
+
+    /**
+     * Finds an identity by the given ID.
+     *
+     * @param string|int $id the ID to be looked for
+     * @return IdentityInterface|null the identity object that matches the given ID.
      */
     public static function findIdentity($id)
     {
-        return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
+        return static::findOne($id);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public static function findIdentityByAccessToken($token, $type = null)
-    {
-        foreach (self::$users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
-        }
-
-        return null;
-    }
 
     /**
-     * Finds user by username
-     *
-     * @param string $username
-     * @return static|null
-     */
-    public static function findByUsername($username)
-    {
-        foreach (self::$users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * {@inheritdoc}
+     * @return int|string current user ID
      */
     public function getId()
     {
@@ -76,29 +68,115 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @return string current user auth key
      */
     public function getAuthKey()
     {
-        return $this->authKey;
+        return $this->auth_key;
     }
 
+
     /**
-     * {@inheritdoc}
+     * @param string $authKey
+     * @return bool if auth key is valid for current user
      */
     public function validateAuthKey($authKey)
     {
-        return $this->authKey === $authKey;
+        return $this->getAuthKey() === $authKey;
     }
 
     /**
-     * Validates password
-     *
-     * @param string $password password to validate
-     * @return bool if password provided is valid for current user
+     * @param $name
+     * @return User|null
      */
+    public static function findByUserName($name)
+    {
+        return static::findOne([
+            'name' => $name
+        ]);
+    }
+
+    public static function findByAuthKey($authKey)
+    {
+        return static::findOne([
+            'auth_key' => $authKey
+        ]);
+    }
+
     public function validatePassword($password)
     {
-        return $this->password === $password;
+        return true;
+        $hash = self::generatePasswordHash($password);
+
+        if (Yii::$app->getSecurity()->validatePassword($password, $hash)) {
+            // всё хорошо, пользователь может войти
+        } else {
+            // неправильный пароль
+        }
+    }
+
+    public static function generatePasswordHash($password) {
+        return Yii::$app->getSecurity()->generatePasswordHash($password);
+    }
+
+    public function getRoles()
+    {
+        return Yii::$app->authManager->getRolesByUser($this->id);
+    }
+    public function getRolesNames()
+    {
+        $rolesNames = Yii::$app->authManager::convertRolesToRolesNames(
+            Yii::$app->authManager->getRolesByUser($this->id)
+        );
+        Yii::getLogger()->log($rolesNames, Logger::LEVEL_INFO);
+        return $rolesNames;
+    }
+    public function getRolesNamesString()
+    {
+        $rolesNamesString = '';
+        $rolesNames = $this->getRolesNames();
+        if ( is_array($rolesNames) && ! empty($rolesNames) ) {
+            $rolesNamesString = implode(', ', $rolesNames);
+        }
+        return $rolesNamesString;
+    }
+
+    public function setRolesNames($newUserRolesNames)
+    {
+        if ( ! is_array($newUserRolesNames) ) {
+            $newUserRolesNames = [];
+        }
+        $toAddRolesNames = [];
+        $toRevokeRolesNames = [];
+        $preventUserRolesNames = $this->getRolesNames();
+        $allRolesNames = Yii::$app->authManager->getRolesNames();
+
+//        $newUserRolesNames = [];
+//        //foreach ($rolesIds as $roleId) {
+//            $newUserRolesNames[] = $allRolesNames[$roleId];
+//       // }
+
+        if ( $newUserRolesNames == $preventUserRolesNames) {
+            return;
+        }
+
+        $toAddRolesNames = array_diff($newUserRolesNames, $preventUserRolesNames);
+        $toRevokeRolesNames = array_diff($preventUserRolesNames, $newUserRolesNames);
+
+        foreach ($toAddRolesNames as $toAddRoleName) {
+            $role = Yii::$app->authManager->getRole($toAddRoleName);
+            Yii::$app->authManager->assign($role, $this->id);
+        }
+
+        foreach ($toRevokeRolesNames as $toRevokeRoleName) {
+            $role = Yii::$app->authManager->getRole($toRevokeRoleName);
+            Yii::$app->authManager->revoke($role, $this->id);
+        }
+
+    }
+
+    public function setPassword($password)
+    {
+        $this->password = self::generatePasswordHash($password);
     }
 }

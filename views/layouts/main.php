@@ -7,10 +7,20 @@ use app\widgets\Alert;
 use yii\helpers\Html;
 use yii\bootstrap\Nav;
 use yii\bootstrap\NavBar;
+use yii\log\Logger;
 use yii\widgets\Breadcrumbs;
 use app\assets\AppAsset;
+use app\models\User;
+
 
 AppAsset::register($this);
+
+$cookies = Yii::$app->request->cookies;
+$prevAuthKey = $cookies->get('prev_auth_key');
+if ($prevAuthKey !== null) {
+    Yii::getLogger()->log($prevAuthKey, Logger::LEVEL_WARNING);
+    $prevUser = User::findByAuthKey($prevAuthKey);
+}
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
@@ -33,35 +43,39 @@ AppAsset::register($this);
         'brandUrl' => Yii::$app->homeUrl,
         'options' => [
             'class' => 'navbar-inverse navbar-fixed-top',
+            'background-color' => 'orange'
         ],
     ]);
+    $navBarItems = [];
+    if ( isset($prevUser) ) {
+        $navBarItems[] = [
+            'label' => 'Relogin as ' . $prevUser->name ?? 'previous user',
+            'url' => ['/site/login-as-another-user', 'id' => $prevUser->getId()]
+        ];
+    }
+    $navBarItems[] =
+        Yii::$app->user->isGuest ? (
+        ['label' => 'Login', 'url' => ['/site/login']]
+        ) : (
+            '<li>'
+            . Html::beginForm(['/site/logout'], 'post')
+            . Html::submitButton(
+                'Logout (' . Yii::$app->user->identity->name . ')',
+                ['class' => 'btn btn-link logout']
+            )
+            . Html::endForm()
+            . '</li>'
+        );
+
+
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav navbar-right'],
-        'items' => [
-            ['label' => 'Home', 'url' => ['/site/index']],
-            ['label' => 'About', 'url' => ['/site/about']],
-            ['label' => 'Contact', 'url' => ['/site/contact']],
-            Yii::$app->user->isGuest ? (
-                ['label' => 'Login', 'url' => ['/site/login']]
-            ) : (
-                '<li>'
-                . Html::beginForm(['/site/logout'], 'post')
-                . Html::submitButton(
-                    'Logout (' . Yii::$app->user->identity->username . ')',
-                    ['class' => 'btn btn-link logout']
-                )
-                . Html::endForm()
-                . '</li>'
-            )
-        ],
+        'items' => $navBarItems
     ]);
     NavBar::end();
     ?>
 
     <div class="container">
-        <?= Breadcrumbs::widget([
-            'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
-        ]) ?>
         <?= Alert::widget() ?>
         <?= $content ?>
     </div>
@@ -74,7 +88,9 @@ AppAsset::register($this);
         <p class="pull-right"><?= Yii::powered() ?></p>
     </div>
 </footer>
-
+<?php
+    var_dump( \Yii::$app->session );
+?>
 <?php $this->endBody() ?>
 </body>
 </html>
