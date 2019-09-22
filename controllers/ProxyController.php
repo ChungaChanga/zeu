@@ -5,7 +5,6 @@ namespace app\controllers;
 use Yii;
 use app\models\Proxy;
 use app\models\ProxySearch;
-use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\helpers\{
@@ -13,6 +12,19 @@ use yii\helpers\{
     ArrayHelper
 };
 use kartik\grid\EditableColumnAction;
+
+use app\common\{
+    ProxyFile,
+    ProxyFileCSV
+};
+use app\models\{
+    ProxyDataCollection,
+    UploadProxyFileForm
+};
+use yii\web\{
+    Controller,
+    UploadedFile
+};
 
 
 /**
@@ -174,5 +186,31 @@ class ProxyController extends Controller
         }
 
         throw new NotFoundHttpException(Yii::t('app', 'The requested page does not exist.'));
+    }
+
+    public function actionUploadFile()
+    {
+        $uploadFormModel = new UploadProxyFileForm();
+
+        if (Yii::$app->request->isPost) {
+            $uploadFormModel->imageFile = UploadedFile::getInstance($uploadFormModel, 'imageFile');
+            if ( $uploadFormModel->upload() ) {
+                $fileHandler = new ProxyFileCSV( $uploadFormModel->getUploadFullFileName() );
+                $proxyDataCollection = new ProxyDataCollection();
+                $proxyDataCollection->collection = $fileHandler->getAllProxy();
+
+                if ( $proxyDataCollection->validate() && $proxyDataCollection->batchSave() ) {
+                    return $this->render('upload-file-success', [
+                        'proxyDataCollection'  => $proxyDataCollection
+                    ]);
+                } else {
+                    return $this->render('upload-file-failed', [
+                        'validationErrors' => $proxyDataCollection->getErrorSummary(true)
+                    ]);
+                }
+            }
+        }
+
+        return $this->render('upload-file', ['model' => $uploadFormModel]);
     }
 }

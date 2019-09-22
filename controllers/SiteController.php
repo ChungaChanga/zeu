@@ -8,7 +8,7 @@ use yii\web\Controller;
 use yii\web\Response;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
-use app\models\ContactForm;
+use app\models\User;
 
 class SiteController extends Controller
 {
@@ -86,6 +86,24 @@ class SiteController extends Controller
         ]);
     }
 
+    public function actionLoginAsAnotherUser(int $id)
+    {
+        $user = User::findIdentity($id);
+
+        $currentUserAuthKey = Yii::$app->user->identity->getAuthKey();
+
+        Yii::$app->user->switchIdentity($user);
+
+        $cookies = Yii::$app->response->cookies;
+
+        $cookies->add(new \yii\web\Cookie([
+            'name' => 'prev_auth_key',
+            'value' => $currentUserAuthKey,
+        ]));
+
+        return $this->goHome();
+    }
+
     /**
      * Logout action.
      *
@@ -94,6 +112,9 @@ class SiteController extends Controller
     public function actionLogout()
     {
         Yii::$app->user->logout();
+
+        $cookies = Yii::$app->response->cookies;
+        $cookies->remove('prev_auth_key', true);
 
         return $this->goHome();
     }

@@ -43,7 +43,6 @@ class UserController extends Controller
         if (!parent::beforeAction($action)) {
             return false;
         }
-
         if (\Yii::$app->user->can('handleUser')) {
             return true;
         }

@@ -26,5 +26,5 @@ abstract class ProxyFile
     /**
      * @return array
      */
-    abstract public function getProxyDataCollection(): array ;
+    abstract public function getAllProxy(): array ;
 }

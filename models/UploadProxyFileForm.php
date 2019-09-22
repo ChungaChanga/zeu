@@ -7,7 +7,7 @@ use Yii;
 use yii\base\Model;
 use yii\web\UploadedFile;
 
-class UploadForm extends Model
+class UploadProxyFileForm extends Model
 {
     /**
      * @var UploadedFile
@@ -35,7 +35,7 @@ class UploadForm extends Model
     /**
      * @return string
      */
-    public function getUploadedFullFileName()
+    public function getUploadFullFileName()
     {
         return $this->getUploadDir() . $this->imageFile->name;
     }

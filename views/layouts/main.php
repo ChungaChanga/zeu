@@ -47,7 +47,7 @@ if ($prevAuthKey !== null) {
         ],
     ]);
     $navBarItems = [];
-    if ( isset($prevUser) ) {
+    if ( isset($prevUser) && ! Yii::$app->user->isGuest) {
         $navBarItems[] = [
             'label' => 'Relogin as ' . $prevUser->name ?? 'previous user',
             'url' => ['/site/login-as-another-user', 'id' => $prevUser->getId()]
@@ -74,9 +74,11 @@ if ($prevAuthKey !== null) {
     ]);
     NavBar::end();
     ?>
-
     <div class="container">
         <?= Alert::widget() ?>
+        <?= Breadcrumbs::widget([
+            'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
+        ]) ?>
         <?= $content ?>
     </div>
 </div>
@@ -88,9 +90,6 @@ if ($prevAuthKey !== null) {
         <p class="pull-right"><?= Yii::powered() ?></p>
     </div>
 </footer>
-<?php
-    var_dump( \Yii::$app->session );
-?>
 <?php $this->endBody() ?>
 </body>
 </html>

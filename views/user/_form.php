@@ -18,7 +18,7 @@ use kartik\select2\Select2;
 
     <?= $form->field($model, 'email')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'password')->passwordInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'newPassword')->passwordInput(['maxlength' => true]) ?>
 
     <?=
 //    $form->field($model, 'rolesNames')

@@ -19,7 +19,7 @@ class ProxyDataCollection extends Model
         return [
             ['collection', function($collection) {
                 if ( empty($this->$collection) ) {
-                    return;
+                    $this->addError('collection', 'Proxy collection is empty');
                 }
 
                 $proxyTemplate = new Proxy();
@@ -29,9 +29,11 @@ class ProxyDataCollection extends Model
                     if ( $proxyTemplate->validate() ) {
                         continue;
                     } else {
-                        $this->addError('data',
-                            array_merge( $proxyTemplate->attributes  , $proxyTemplate->getErrorSummary(true) )
+                        $errorData = array_merge(
+                            $proxyTemplate->attributes,
+                            $proxyTemplate->getErrorSummary(true)
                         );
+                        $this->addError('collection', $errorData);
                     }
                 }
             }]
@@ -45,10 +47,11 @@ class ProxyDataCollection extends Model
     public function batchSave()
     {
         $orderColumn = ['ip_hash', 'port'];
-        $hashedProxyData = $this->convertDataToDbFormat($this->collection, $orderColumn);
+        $collectionWithIpHashes = $this->addIpHashes($this->collection);
+        $orderedProxyCollection = $this->orderCollection($collectionWithIpHashes, $orderColumn);
 
         $rowCount = Yii::$app->db->createCommand()
-            ->batchInsert( Proxy::tableName(), $orderColumn, $hashedProxyData)
+            ->batchInsert( Proxy::tableName(), $orderColumn, $orderedProxyCollection)
             ->execute();
         if ($rowCount) {
             return true;
@@ -60,14 +63,24 @@ class ProxyDataCollection extends Model
      * @param array $orderColumn
      * @return array
      */
-    private function convertDataToDbFormat(array $collection, array $orderColumn): array
+    private function orderCollection(array $collection, array $orderColumn): array
     {
-        $orderColumnByNames = array_flip($orderColumn);
-        $convertedProxyData = array_map(function ($proxyData) use($orderColumnByNames) {
-            $convertedProxyData[ $orderColumnByNames['ip_hash'] ] = Proxy::ip4ToHash( $proxyData['ip'] );
-            $convertedProxyData[ $orderColumnByNames['port'] ] = $proxyData['port'];
-            return $convertedProxyData;
+        $orderedProxyCollection = array_map(function ($proxyData) use($orderColumn) {
+            $orderedProxyData = [];
+            foreach ($orderColumn as $columnPosition => $columnName) {
+                $orderedProxyData[$columnPosition] = $proxyData[$columnName];
+            }
+            return $orderedProxyData;
         }, $collection);
-        return $convertedProxyData;
+        return $orderedProxyCollection;
+    }
+
+    private function addIpHashes(array $collection): array
+    {
+        $collectionWithIpHashes = array_map(function ($proxyData) {
+            $proxyData['ip_hash'] = Proxy::ip4ToHash($proxyData['ip']);
+            return $proxyData;
+        }, $collection);
+        return $collectionWithIpHashes;
     }
 }

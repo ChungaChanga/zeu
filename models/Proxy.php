@@ -46,6 +46,7 @@ class Proxy extends \yii\db\ActiveRecord
         ];
     }
 
+
     /**
      * @return array|false
      */

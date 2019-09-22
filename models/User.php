@@ -23,8 +23,14 @@ class User extends ActiveRecord implements IdentityInterface
         return [
             [['name'], 'string'],
             [['email'], 'email'],
-            [['password', 'rolesNames'], 'safe'],
+            [['newPassword'], 'match', 'pattern' => '/[A-Z0-9]{3,}/i', 'message' => 'this must be like ...'],
+            [['rolesNames'], 'safe'],
         ];
+    }
+
+    public function fields()
+    {
+        return ['id', 'name', 'email', 'newPassword'];
     }
 
     /**
@@ -105,13 +111,16 @@ class User extends ActiveRecord implements IdentityInterface
 
     public function validatePassword($password)
     {
-        return true;
-        $hash = self::generatePasswordHash($password);
-
+        $hash = $this->password;
+        Yii::getLogger()->log('hiiiiii', Logger::LEVEL_WARNING);
+        Yii::getLogger()->log($password, Logger::LEVEL_WARNING);
+        Yii::getLogger()->log(self::generatePasswordHash($password), Logger::LEVEL_WARNING);
+        Yii::getLogger()->log($hash, Logger::LEVEL_WARNING);
+        Yii::getLogger()->log(Yii::$app->getSecurity()->validatePassword($password, $hash), Logger::LEVEL_WARNING);
         if (Yii::$app->getSecurity()->validatePassword($password, $hash)) {
-            // всё хорошо, пользователь может войти
+            return true;
         } else {
-            // неправильный пароль
+            return false;
         }
     }
 
@@ -149,12 +158,6 @@ class User extends ActiveRecord implements IdentityInterface
         $toAddRolesNames = [];
         $toRevokeRolesNames = [];
         $preventUserRolesNames = $this->getRolesNames();
-        $allRolesNames = Yii::$app->authManager->getRolesNames();
-
-//        $newUserRolesNames = [];
-//        //foreach ($rolesIds as $roleId) {
-//            $newUserRolesNames[] = $allRolesNames[$roleId];
-//       // }
 
         if ( $newUserRolesNames == $preventUserRolesNames) {
             return;
@@ -175,8 +178,15 @@ class User extends ActiveRecord implements IdentityInterface
 
     }
 
-    public function setPassword($password)
+    public function getNewPassword()
     {
-        $this->password = self::generatePasswordHash($password);
+        return '';
+    }
+    public function setNewPassword($newPassword)
+    {
+        if ( empty($newPassword) ) {
+            return;
+        }
+        $this->password = self::generatePasswordHash($newPassword);
     }
 }
