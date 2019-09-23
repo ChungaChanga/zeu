@@ -15,6 +15,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?= $this->render('_form', [
         'model' => $model,
+        'isNewUser' => true
     ]) ?>
     <div class="cept-test-block">the user create page is work</div>
 </div>

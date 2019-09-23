@@ -20,32 +20,18 @@ use kartik\select2\Select2;
 
     <?= $form->field($model, 'newPassword')->passwordInput(['maxlength' => true]) ?>
 
-    <?=
-//    $form->field($model, 'rolesNames')
-//        ->dropDownList(
-//            Yii::$app->authManager->getRolesNames(),
-//            ['multiple'=> true]
-//        );
-    $form->field($model, 'rolesNames')->widget(Select2::classname(), [
-        'data' => Yii::$app->authManager->getRolesNames(),
-        'options' => [
-            'multiple' => true
-        ],
-        'pluginOptions' => [
-            'allowClear' => true
-        ],
-    ]);
-
-//     Select2::widget([
-//        'model' => $model,
-//        'attribute' => 'rolesNames',
-//        'data' => Yii::$app->authManager->getRolesNames(),
-//        'options' => [
-//           // 'placeholder' => 'Select provinces ...',
-//            'multiple' => true,
-//        ],
-//    ]);
-
+    <?php
+        if ( !isset($isNewUser) ) {
+            echo $form->field($model, 'rolesNames')->widget(Select2::classname(), [
+                'data' => Yii::$app->authManager->getRolesNames(),
+                'options' => [
+                    'multiple' => true
+                ],
+                'pluginOptions' => [
+                    'allowClear' => true
+                ],
+            ]);
+        }
     ?>
 
     <div class="form-group">
