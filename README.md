@@ -1,4 +1,4 @@
-<h3>RUN<h3>
+<h3>RUN</h3>
 <ol>
     <li>docker-compose build</li>
     <li>docker-compose up</li>
