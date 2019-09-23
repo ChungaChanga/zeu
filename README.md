@@ -2,6 +2,8 @@
 <ol>
     <li>docker-compose build</li>
     <li>docker-compose up</li>
+    <li>composer install</li>
+    <li>chmod -R 777 web/assets && chmod -R 777 runtime </li>
 </ol>
 
 
