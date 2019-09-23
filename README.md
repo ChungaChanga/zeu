@@ -3,7 +3,8 @@
     <li>docker-compose build</li>
     <li>docker-compose up</li>
     <li>composer install</li>
-    <li>chmod -R 777 web/assets && chmod -R 777 runtime </li>
+    <li>chmod -R 777 web/assets && chmod -R 777 web/uploads &&  chmod -R 777 runtime </li>
+    <li>go to http://localhost:8000</li>
 </ol>
 
 
